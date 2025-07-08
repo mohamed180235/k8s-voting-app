@@ -1,0 +1,30 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vote-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vote  # Targets the "vote" deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale if CPU > 70% of requested
+
+# To simulate load on the vote app
+#kubectl run -it --rm loader --image=busybox --restart=Never -- /bin/sh -c "while true; do wget -qO- http://vote; done"
+
+# Watch HPA adjust replicas
+# watch -n 1 kubectl get hpa,pods
+
+#note that you need the API Metric to be installed before using the built in hpa
+# excute kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+# if crashes add the follwoing into containers.args inside the metric deployment (kubectl edit deployment metrics-server -n kube-system)
+# - --kubelet-insecure-tls
+# - --kubelet-preferred-address-types=InternalIP
